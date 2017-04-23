@@ -39,7 +39,7 @@ int main() {
     while (true) {
         int n;
         char response;
-        cout << "\n1 | Print out tree\n2 | Insert a number\nq | quit" << endl;
+        cout << "\n1 | Print out tree\n2 | Insert a number\n3 | Delete a number\nq | quit" << endl;
         cin >> response;
         
         if (response == '1') {
@@ -50,6 +50,11 @@ int main() {
             cout << endl;
             rbt.insert(n);
             rbt.print();
+        } else if (response == '3') {
+            cout << "Number to delete: ";
+            cin >> n;
+            cout << endl;
+            // TO-DO: rbt.delete();
         } else {
             break;
         }
