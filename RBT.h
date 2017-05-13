@@ -75,6 +75,14 @@ struct Node {
             return mParent->mRight == this;
         }
     }
+    
+    // Deletes all subtrees
+    void deleteSubtrees() {
+        if (mLeft != 0) { mLeft->deleteSubtrees(); }
+        if (mRight != 0) { mRight->deleteSubtrees(); }
+        delete mLeft;
+        delete mRight;
+    }
 };
 
 class RBT {

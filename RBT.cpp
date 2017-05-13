@@ -51,8 +51,9 @@ void RBT::insert(int data) {
 }
 
 // Find number in RBT
-bool RBT::find(int data) { return search(root, data) != 0; }
+bool RBT::find(int data) { return search(root, data) != NULL; }
 Node* RBT::search(Node* root, int data) {
+    if (root == NULL) { return NULL; }
     if (root->mData == data) { return root; }
     else if (data > root->mData) { // If you're searching for a number that's greater, go right
         return search(root->mRight, data);
@@ -61,10 +62,45 @@ Node* RBT::search(Node* root, int data) {
     }
 }
 
-
 // Remove number from RBT
 bool RBT::remove(int data) {
-    insert(insertFirst(root, data));
+    Node* target = search(root, data);
+    
+    // Node with desired data point not found
+    if (target == NULL) { return false; }
+    
+    // If neither child is null, replace target with next & delete next 
+    if (target->mLeft != NULL && target->mRight != NULL) {
+        Node* next = target->mRight;
+        while (next->mLeft != NULL) {
+            next = next->mLeft;
+        }
+        target->mData = next->mData;
+        target = next;
+    }
+    
+    // if (target->isRed())
+    // 
+    Node* child;
+    if (target->mLeft == NULL) {
+        child = target->mRight;
+    } else {
+        child = target->mLeft;
+    }
+    
+    if (child->isRed()) {
+        Node* parent = child->mParent;
+        // Node** childPtr = parentPtrGenerator(child);
+        child->mParent = child->getGrandparent();
+        (*parentPtrGenerator(parent)) = child;
+        (*parentPtrGenerator(child)) = 0;
+        parent->deleteSubtrees();
+        delete parent;
+        child->setColor('b');
+    }
+    
+    target = NULL;
+    // balance target again
 }
 
 // Main insertion algorithm
