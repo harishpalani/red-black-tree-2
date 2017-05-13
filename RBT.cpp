@@ -50,6 +50,23 @@ void RBT::insert(int data) {
     insert(insertFirst(root, data));
 }
 
+// Find number in RBT
+bool RBT::find(int data) { return search(root, data) != 0; }
+Node* RBT::search(Node* root, int data) {
+    if (root->mData == data) { return root; }
+    else if (data > root->mData) { // If you're searching for a number that's greater, go right
+        return search(root->mRight, data);
+    } else { // If you're searching for a number that's less, go left
+        return search(root->mLeft, data);
+    }
+}
+
+
+// Remove number from RBT
+bool RBT::remove(int data) {
+    insert(insertFirst(root, data));
+}
+
 // Main insertion algorithm
 void RBT::insert(Node* node) {
     if (node->mParent == 0) {

@@ -39,6 +39,13 @@ struct Node {
         return grandparent->mLeft;
     }
     
+    // Gets sibling node
+    Node* getSibling() {
+        if (mParent == 0) { return 0; }
+        if (mParent->mLeft == this) { return mParent->mRight; } 
+        return mParent->mLeft;
+    }
+    
     // Paints node either red or black
     void setColor(char color) { // 'r' = RED | 'b' = BLACK
         if (color == 'r') { mBlack = false; }
@@ -74,13 +81,16 @@ class RBT {
     public:
         RBT();
         ~RBT();
-        void print();           // Option #1
+        void print();          // Option #1
         void insert(int data); // Option #2
+        bool find(int data); // Option #3
+        bool remove(int data); // Option #4
     
     private:
         Node* root;
         Node* insertFirst(Node* child, int data);
         void insert(Node* node);
+        Node* search(Node* root, int data);
         void populate(int* &list, int i, Node* node);
         int countLevels(Node* root, int level);
         Node** parentPtrGenerator(Node* child);
