@@ -79,10 +79,13 @@ bool RBT::remove(int data) {
         target = next;
     }
     
-    // if (target->isRed())
-    // 
+    if (target->isRed()) { 
+        target == NULL;
+        // return;
+    }
+    
     Node* child;
-    if (target->mLeft == NULL) {
+    if (target->mLeft == NULL) { // non-NULL child
         child = target->mRight;
     } else {
         child = target->mLeft;
@@ -90,7 +93,6 @@ bool RBT::remove(int data) {
     
     if (child->isRed()) {
         Node* parent = child->mParent;
-        // Node** childPtr = parentPtrGenerator(child);
         child->mParent = child->getGrandparent();
         (*parentPtrGenerator(parent)) = child;
         (*parentPtrGenerator(child)) = 0;
@@ -99,9 +101,8 @@ bool RBT::remove(int data) {
         child->setColor('b');
     }
     
-    target = NULL;
-    
     // Node target must replace its former parent
+    target = NULL;
     balance(target);
 }
 
@@ -114,7 +115,7 @@ void RBT::balance(Node* node) {
         node->mParent->setColor('r');
         node->getSibling()->setColor('b');
         
-        // Rotate sibling into parent's place.
+        // Rotate sibling into parent's place
         if(node->isChild('l')) {
             // Slide the current node up to its parent locale
             Node* parent = node->getSibling()->mParent;
