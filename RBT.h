@@ -102,6 +102,7 @@ class RBT {
         void populate(int* &list, int i, Node* node);
         int countLevels(Node* root, int level);
         Node** parentPtrGenerator(Node* child);
+        void balance(Node* node);
 };
 
 #endif
