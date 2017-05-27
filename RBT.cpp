@@ -53,7 +53,9 @@ void RBT::insert(int data) {
 // Find number in RBT
 bool RBT::find(int data) { return search(root, data) != NULL; }
 Node* RBT::search(Node* root, int data) {
-    if (root == NULL) { return NULL; }
+    // if (root == NULL) { return NULL; }
+    if (root->isSentinel()) { return 0; }
+    
     if (root->mData == data) { return root; }
     else if (data > root->mData) { // If you're searching for a number that's greater, go right
         return search(root->mRight, data);
@@ -67,25 +69,34 @@ bool RBT::remove(int data) {
     Node* target = search(root, data);
     
     // Node with desired data point not found
-    if (target == NULL) { return false; }
+    // if (target == NULL) { return false; }
+    if (target == 0) { return false; }
     
     // If neither child is null, replace target with next & delete next 
-    if (target->mLeft != NULL && target->mRight != NULL) {
+    // if (target->mLeft != NULL && target->mRight != NULL) {
+    if (!target->mLeft->isSentinel() && !target->mRight->isSentinel()) {
         Node* next = target->mRight;
-        while (next->mLeft != NULL) {
+        // while (next->mLeft != NULL) {
+        while (!next->mLeft->isSentinel()) {
             next = next->mLeft;
         }
         target->mData = next->mData;
         target = next;
     }
     
+    removeTarget(target);
+    return true;
+}
+
+void RBT::removeTarget(Node* target) {
     if (target->isRed()) { 
-        target == NULL;
-        // return;
+        // target == NULL;
+        target->setSentinel();
+        return;
     }
     
     Node* child;
-    if (target->mLeft == NULL) { // non-NULL child
+    if (target->mLeft->isSentinel()) {
         child = target->mRight;
     } else {
         child = target->mLeft;
@@ -102,7 +113,7 @@ bool RBT::remove(int data) {
     }
     
     // Node target must replace its former parent
-    target = NULL;
+    target->setSentinel(); // target = NULL;
     balance(target);
 }
 

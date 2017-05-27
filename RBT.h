@@ -14,7 +14,7 @@ struct Node {
     Node* mParent;
     
     // Node constructor w/ initialization list
-    Node(int data, bool black = false) : mLeft(0), mRight(0), mParent(0) {
+        Node(int data, bool black = false) : mLeft(0), mRight(0), mParent(0) {
         mData = data;
         mBlack = black;
     }
@@ -23,6 +23,18 @@ struct Node {
     Node() : mLeft(0), mRight(0), mParent(0) {
         mData = 0;
         mBlack = true;
+    }
+    
+    // Determines if node is sentinel
+    bool isSentinel() { mLeft == 0 && mRight == 0; }
+    
+    // Create a sentinel node
+    void setSentinel() {
+        deleteSubtrees();
+        mLeft = 0;
+        mRight = 0;
+        setColor('b');
+        mData = 0;
     }
     
     // Gets grandparent node
@@ -103,6 +115,7 @@ class RBT {
         int countLevels(Node* root, int level);
         Node** parentPtrGenerator(Node* child);
         void balance(Node* node);
+        void removeTarget(Node* target);
 };
 
 #endif
