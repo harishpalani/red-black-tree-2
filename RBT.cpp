@@ -110,6 +110,7 @@ void RBT::removeTarget(Node* target) {
         parent->deleteSubtrees();
         delete parent;
         child->setColor('b');
+        return;
     }
     
     // Node target must replace its former parent
@@ -121,15 +122,16 @@ void RBT::balance(Node* node) {
     // If node is the root
     if (node->mParent == 0) { return; }
     
-    if (node->getSibling()->isRed()) { // Node's parent is black
+    Node* sibling = node->getSibling();
+    if (sibling->isRed()) { // Node's parent is black
         // Reverse parent and sibling colors
         node->mParent->setColor('r');
-        node->getSibling()->setColor('b');
+        sibling->setColor('b');
         
         // Rotate sibling into parent's place
         if(node->isChild('l')) {
             // Slide the current node up to its parent locale
-            Node* parent = node->getSibling()->mParent;
+            Node* parent = sibling->mParent;
             Node* bygone = parent->mParent;
             *parentPtrGenerator(bygone) = parent;
             parent->mParent = parent->getGrandparent();
@@ -137,7 +139,7 @@ void RBT::balance(Node* node) {
             parent->setLeft(bygone);
         } else {
             // Slide the current node up to its parent locale
-            Node* parent = node->getSibling()->mParent;
+            Node* parent = sibling->mParent;
             Node* bygone = parent->mParent;
             *parentPtrGenerator(bygone) = parent;
             parent->mParent = parent->getGrandparent();
@@ -146,28 +148,29 @@ void RBT::balance(Node* node) {
         }
     }
     
+    sibling = node->getSibling();
     // If parent is black, set sibling to red & balance
-    if (node->mParent->mBlack && node->getSibling()->mBlack && node->getSibling()->mLeft->mBlack && node->getSibling()->mRight->mBlack) {
-        node->getSibling()->setColor('r');
+    if (node->mParent->mBlack && sibling->mBlack && sibling->mLeft->mBlack && sibling->mRight->mBlack) {
+        sibling->setColor('r');
         balance(node->mParent);
         return;
     }
     
     // If parent is red, set sibling to red & recolor the parent (to black)
-    if (node->mParent->isRed() && node->getSibling()->mBlack && node->getSibling()->mLeft->mBlack && node->getSibling()->mRight->mBlack){
-        node->getSibling()->setColor('r');
+    if (node->mParent->isRed() && sibling->mBlack && sibling->mLeft->mBlack && sibling->mRight->mBlack){
+        sibling->setColor('r');
         node->mParent->setColor('b');
         return;
     }
     
     // The left child of the sibling is red:
-    if (node->isChild('l') && node->getSibling()->mRight->mBlack) {
+    if (node->isChild('l') && sibling->mRight->mBlack) {
         // Swap colors of the sibling & its left child
-        node->getSibling()->mLeft->setColor('b');
-        node->getSibling()->setColor('r');
+        sibling->mLeft->setColor('b');
+        sibling->setColor('r');
         
         // Slide the current node up to its parent locale
-        Node* parent = node->getSibling()->mLeft->mParent;
+        Node* parent = sibling->mLeft->mParent;
         Node* bygone = parent->mParent;
         *parentPtrGenerator(bygone) = parent;
         parent->mParent = parent->getGrandparent();
@@ -176,13 +179,13 @@ void RBT::balance(Node* node) {
     }
     
     // The right child of the sibling is red:
-    else if (node->isChild('r') && node->getSibling()->mLeft->mBlack) {
+    else if (node->isChild('r') && sibling->mLeft->mBlack) {
         // Swap colors of the sibling & its right child
-        node->getSibling()->mRight->setColor('b');
-        node->getSibling()->setColor('r');
+        sibling->mRight->setColor('b');
+        sibling->setColor('r');
         
         // Slide the current node up to its parent locale
-        Node* parent = node->getSibling()->mRight->mParent;
+        Node* parent = sibling->mRight->mParent;
         Node* bygone = parent->mParent;
         *parentPtrGenerator(bygone) = parent;
         parent->mParent = parent->getGrandparent();
@@ -190,15 +193,16 @@ void RBT::balance(Node* node) {
         parent->setLeft(bygone);
     }
     
+    sibling = node->getSibling();
     // Swap sibling & parent colors
-    node->getSibling()->mBlack = node->mParent->mBlack;
+    sibling->mBlack = node->mParent->mBlack;
     node->mParent->setColor('b');
     if (node->isChild('l')) {
         // Set sibling's right child to black
-        node->getSibling()->mRight->setColor('b');
+        sibling->mRight->setColor('b');
 
         // Slide the current node up to its parent locale
-        Node* parent = node->getSibling()->mRight->mParent;
+        Node* parent = sibling->mRight->mParent;
         Node* bygone = parent->mParent;
         *parentPtrGenerator(bygone) = parent;
         parent->mParent = parent->getGrandparent();
@@ -206,10 +210,10 @@ void RBT::balance(Node* node) {
         parent->setLeft(bygone);
     } else {
         // Set sibling's left child to black
-        node->getSibling()->mLeft->setColor('b');
+        sibling->mLeft->setColor('b');
 
         // Slide the current node up to its parent locale
-        Node* parent = node->getSibling()->mParent;
+        Node* parent = sibling->mParent;
         Node* bygone = parent->mParent;
         *parentPtrGenerator(bygone) = parent;
         parent->mParent = parent->getGrandparent();
