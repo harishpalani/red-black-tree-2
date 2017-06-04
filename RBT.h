@@ -14,7 +14,7 @@ struct Node {
     Node* mParent;
     
     // Node constructor w/ initialization list
-        Node(int data, bool black = false) : mLeft(0), mRight(0), mParent(0) {
+    Node(int data, bool black = false) : mLeft(0), mRight(0), mParent(0) {
         mData = data;
         mBlack = black;
     }
@@ -26,15 +26,15 @@ struct Node {
     }
     
     // Determines if node is sentinel
-    bool isSentinel() { mLeft == 0 && mRight == 0; }
+    bool isSentinel() { return mLeft == 0 && mRight == 0; }
     
     // Create a sentinel node
     void setSentinel() {
         deleteSubtrees();
         mLeft = 0;
         mRight = 0;
-        setColor('b');
         mData = 0;
+        setColor('b');
     }
     
     // Gets grandparent node
@@ -47,7 +47,7 @@ struct Node {
     Node* getUncle() {
         Node* grandparent = getGrandparent();
         if (grandparent == 0) { return 0; }
-        if (grandparent->mLeft == mParent) { grandparent->mRight; }
+        if (grandparent->mLeft == mParent) { return grandparent->mRight; }
         return grandparent->mLeft;
     }
     

@@ -64,7 +64,11 @@ int main() {
             cout << "Number to delete: ";
             cin >> n;
             cout << endl;
-            rbt.remove(n);
+            if (rbt.remove(n)) {
+                cout << n << " was removed successfully." << endl;
+            } else {
+                cout << n << " could not be found in the tree." << endl;
+            }
             rbt.print();
         } else {
             break;

@@ -51,7 +51,7 @@ void RBT::insert(int data) {
 }
 
 // Find number in RBT
-bool RBT::find(int data) { return search(root, data) != NULL; }
+bool RBT::find(int data) { return search(root, data) != 0; }
 Node* RBT::search(Node* root, int data) {
     // if (root == NULL) { return NULL; }
     if (root->isSentinel()) { return 0; }
@@ -232,7 +232,7 @@ void RBT::insert(Node* node) {
     } else if (node->getUncle()->isRed()) { // Parent is red, Uncle is red
         // SET || Parent: black / Uncle: black / Grandparent: red
         node->mParent->setColor('b');
-       // node->getUncle()->setColor('b');
+        node->getUncle()->setColor('b');
         node->getGrandparent()->setColor('r');
         
         // Recursive iteration upwards, w/ grandparent
@@ -300,7 +300,8 @@ int RBT::countLevels(Node* root, int level = 0) { // credit: Stack Overflow
 // RBT functions
 // Initiates RBT insertion process
 Node* RBT::insertFirst(Node* child, int data) {
-    if (child->mLeft == 0 && child->mLeft == 0) {
+    // if (child->mLeft == 0 && child->mLeft == 0) {
+    if (child->isSentinel()) {
         child->mData = data;
         child->setColor('r');
         child->setLeft(new Node());
