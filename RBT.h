@@ -6,116 +6,109 @@
 #include <iostream>
 
 struct Node {
-    int mData;
-    bool mBlack;
-    
-    Node* mLeft;
-    Node* mRight;
-    Node* mParent;
-    
-    // Node constructor w/ initialization list
-    Node(int data, bool black = false) : mLeft(0), mRight(0), mParent(0) {
-        mData = data;
-        mBlack = black;
-    }
-    
-    // Default node constructor, also w/ initialization list
-    Node() : mLeft(0), mRight(0), mParent(0) {
-        mData = 0;
-        mBlack = true;
-    }
-    
-    // Determines if node is sentinel
-    bool isSentinel() { return mLeft == 0 && mRight == 0; }
-    
-    // Create a sentinel node
-    void setSentinel() {
-        deleteSubtrees();
-        mLeft = 0;
-        mRight = 0;
-        mData = 0;
-        setColor('b');
-    }
-    
-    // Gets grandparent node
-    Node* getGrandparent() {
-        if (mParent == 0) { return 0; }
-        return mParent->mParent;
-    }
-    
-    // Gets uncle node
-    Node* getUncle() {
-        Node* grandparent = getGrandparent();
-        if (grandparent == 0) { return 0; }
-        if (grandparent->mLeft == mParent) { return grandparent->mRight; }
-        return grandparent->mLeft;
-    }
-    
-    // Gets sibling node
-    Node* getSibling() {
-        if (mParent == 0) { return 0; }
-        if (mParent->mLeft == this) { return mParent->mRight; } 
-        return mParent->mLeft;
-    }
-    
-    // Paints node either red or black
-    void setColor(char color) { // 'r' = RED | 'b' = BLACK
-        if (color == 'r') { mBlack = false; }
-        else { mBlack = true; }
-    }
-    
-    // Sets left node (mLeft)
-    void setLeft(Node* node) {
-        mLeft = node;
-        if (node != 0) { node->mParent = this; }
-    }
-    
-    // Sets right node (mRight)
-    void setRight(Node* node) {
-        mRight = node;
-        if (node != 0) { node->mParent = this; }
-    }
-    
-    // Checks if node is painted red
-    bool isRed() { return !mBlack; }
-    
-    // Checks if node is child in the specified direction
-    bool isChild(char direction) {
-        if (direction = 'l') {
-            return mParent->mLeft == this;
-        } else {
-            return mParent->mRight == this;
-        }
-    }
-    
-    // Deletes all subtrees
-    void deleteSubtrees() {
-        if (mLeft != 0) { mLeft->deleteSubtrees(); }
-        if (mRight != 0) { mRight->deleteSubtrees(); }
-        delete mLeft;
-        delete mRight;
-    }
+  int value;
+  bool black;
+  
+  Node* left;
+  Node* right; 
+  Node* parent;
+  
+  Node(int _value, bool _black = false) : left(0), right(0), parent(0) {
+      value = _value;
+      black = _black;
+  }
+  
+  Node() : left(0), right(0), parent(0) {
+      value = 0;
+      black = true;
+  }
+  
+  ~Node(){}
+  
+  bool isSentinel() { return left == 0 && right == 0; }
+  bool isRed() { return !black; }
+  void paintBlack() { black = true; }
+  void paintRed() { black = false; }
+  void makeSentinel() {
+      deleteSubtrees();
+      left = 0;
+      right = 0;
+      paintBlack();
+      value = 0;
+  }
+  
+  void addSentinelLeafs() {
+      setLeft(new Node());
+      setRight(new Node());
+  }
+  
+  Node* grandparent() {
+      return parent == 0 ? 0 : parent->parent;
+  }
+  
+  Node* uncle() {
+      Node* gp = grandparent();
+      if (gp == 0) { return 0; }
+      return gp->left == parent ? gp->right : gp->left;
+  }
+  
+  Node* sibling() {
+      if (parent == 0) { return 0; }
+      return parent->left == this ? parent->right : parent->left;
+  }
+  
+  void setLeft(Node* node) {
+      left = node;
+      if (node != 0) { node->parent = this; }
+  }
+  
+  void setRight(Node* node){
+      right = node;
+      if (node != 0) { node->parent = this; }
+  }
+  
+  Node* nonSentinelChild() {
+      return left->isSentinel() ? right : left;
+  }
+  
+  bool isLeftChild() {
+      return parent->left == this;
+  }
+  
+  bool isRightChild() {
+      return parent->right == this;
+  }
+  
+  void deleteSubtrees() {
+      if (left != 0) { left->deleteSubtrees(); }
+      if (right != 0) { right->deleteSubtrees(); }
+      delete left;
+      delete right;
+  }
 };
 
 class RBT {
     public:
         RBT();
         ~RBT();
-        void print();          // Option #1
-        void insert(int data); // Option #2
-        bool find(int data); // Option #3
-        bool remove(int data); // Option #4
-    
+        void print();
+        void insert(int num);
+        bool find(int num);
+        bool remove(int num);
+        
     private:
         Node* root;
-        Node* insertFirst(Node* child, int data);
-        void insert(Node* node);
-        Node* search(Node* root, int data);
-        void populate(int* &list, int i, Node* node);
-        int countLevels(Node* root, int level);
-        Node** parentPtrGenerator(Node* child);
-        void balance(Node* node);
-        void removeTarget(Node* target);
+        Node* insertFirst(Node* node, int num);
+        void insert(Node* inserted);
+        Node* search(Node * node, int num);
+        void populateArray(int* &array, int index, Node* node);
+        int getNumLevels(Node* root, int level);
+        void removeSingleNode(Node* toRemove);
+        void leftRotation(Node* formerChild);
+        void rightRotation(Node* formerChild);
+        Node** parentPtrTo(Node* child);
+        void replaceParentOf(Node* child);
+        void rebalance(Node* node);
 };
 
 #endif

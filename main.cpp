@@ -22,7 +22,7 @@ int main() {
     stringstream ss(input);
     
     // Load input list into vector
-    vector<int> list;
+    vector<int> list; 
     int i;
     while (ss >> i) {
         list.push_back(i);

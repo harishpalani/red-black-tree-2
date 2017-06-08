@@ -7,37 +7,161 @@ RBT::RBT() {
 }
 
 RBT::~RBT() {
+    root->deleteSubtrees();
     delete root;
 }
 
-// Visualize RBT
+void RBT::insert(int num) { insert(insertFirst(root, num)); }
+
+void RBT::insert(Node * inserted) {
+    if (inserted->parent == 0) {
+        inserted->paintBlack();
+        return;
+    } else if (inserted->parent->black) { // Parent is black
+        return;
+    } else if (inserted->uncle()->isRed()) { // Parent is red, Uncle is red
+        // SET || Parent: black / Uncle: black / Grandparent: red        
+        inserted->parent->paintBlack();
+        inserted->uncle()->paintBlack();
+        inserted->grandparent()->paintRed();
+        
+        // Recursive iteration upwards, w/ grandparent
+        insert(inserted->grandparent());
+        
+        return;
+    }
+    
+    // Parent is red, Uncle is black | Current node is right child, Parent is left child
+    if (inserted->isRightChild() && inserted->parent->isLeftChild()) {
+        // Slide the current node up to its parent locale
+        leftRotation(inserted);
+        inserted = inserted->left;
+    } 
+    
+    // Parent is red, Uncle is black | Current node is left child, Parent is right child
+    if (inserted->isLeftChild() && inserted->parent->isRightChild()) {
+        // Slide the current node up to its parent locale
+        rightRotation(inserted);
+        inserted = inserted->right;
+    }
+    
+    inserted->grandparent()->paintRed();
+    inserted->parent->paintBlack();
+    
+    if (inserted->isLeftChild()) { // If left child, shift parent to the right
+        rightRotation(inserted->parent);
+    } else { // If right child, shift parent to the left
+        leftRotation(inserted->parent);
+    }
+}
+
+bool RBT::remove(int num) {
+    Node* toRemove = search(root, num);
+    
+    // Node with desired data point not found
+    if (toRemove == 0) { return false; }
+    
+    // If neither child is null, replace target with next & delete next
+    if (!toRemove->left->isSentinel() && !toRemove->right->isSentinel()) {
+        Node* successor = toRemove->right;
+        while (!successor->left->isSentinel()) { successor = successor->left; }
+        toRemove->value = successor->value;
+        toRemove = successor;
+    }
+    removeSingleNode(toRemove);
+    return true;
+}
+
+void RBT::removeSingleNode(Node* toRemove) {
+    if (toRemove->isRed()) {
+        toRemove->makeSentinel();
+        return;
+    }
+    
+    Node* child = toRemove->nonSentinelChild();
+    if (child->isRed()) { // toRemove black, child red.
+        replaceParentOf(child);
+        child->paintBlack();
+        return;
+    }
+    
+    // Node target must replace its former parent
+    toRemove->makeSentinel();
+    rebalance(toRemove);
+}
+
+void RBT::rebalance(Node* node) {
+    // If node is the root
+    if (node->parent == 0) { return; }
+    
+    Node* sibling = node->sibling();
+    if(sibling->isRed()) { // Node's parent is black
+        // Reverse parent and sibling colors
+        node->parent->paintRed();
+        sibling->paintBlack();
+        
+        // Rotate sibling into parent's place
+        if (node->isLeftChild()) { leftRotation(sibling); }
+        else { rightRotation(sibling); }
+    }
+    
+    sibling = node->sibling();
+    // If parent is black, set sibling to red & balance
+    if (node->parent->black && sibling->black && sibling->left->black && sibling->right->black) {
+        sibling->paintRed();
+        rebalance(node->parent);
+        return;
+    }
+    
+    if (node->parent->isRed() && sibling->black && sibling->left->black && sibling->right->black) {
+        sibling->paintRed();
+        node->parent->paintBlack();
+        return;
+    }
+    
+    if (node->isLeftChild() && sibling->right->black) {
+        sibling->left->paintBlack();
+        sibling->paintRed();
+        rightRotation(sibling->left);
+    } else if (node->isRightChild() && sibling->left->black) {
+        sibling->right->paintBlack();
+        sibling->paintRed();
+        leftRotation(sibling->right);
+    }
+    sibling = node->sibling();
+    sibling->black = node->parent->black;
+    node->parent->paintBlack();
+    
+    if(node->isLeftChild()) {
+        sibling->right->paintBlack();
+        leftRotation(sibling);
+    } else {
+        sibling->left->paintBlack();
+        rightRotation(sibling);
+    }
+}
+
 void RBT::print() { // credit: Stack Overflow
-    int levels = countLevels(root, 0);
-    int nodes[(int)(pow(2, levels)) - 1];
-    int* ptr = nodes;
+    int numLevels = getNumLevels(root, 0);
+    int nodes[(int)(pow(2, numLevels)) - 1];
+    int* arrPtr = nodes;
     memset(nodes, 0, sizeof(nodes));
-    populate(ptr, 0, root);
+    populateArray(arrPtr, 0, root);
     
     int index = 0;
-    for (int l = 1; l <= levels; l++) {
-        
-        for (int i = 0; i < pow(2, levels-l)-1; i++) {
-            cout << ' ';
-        }
-        
+    for (int l = 1; l <= numLevels; l++) {
+        for (int i = 0; i < pow(2, numLevels-l)-1; i++) { cout << ' '; }
         for (int n = 0; n < pow(2, l-1); n++) {
-            // Set color | red or black
             if (nodes[index] > 0) {
                 cout << nodes[index] << 'B';
-            } else if (nodes[index] < 0) {
-                cout << -nodes[index] << 'R';
-            } else {
-                cout << ' ';
+            } else if (nodes[index] < 0) { 
+                cout << -nodes[index] << 'R'; 
+            } else { 
+                cout << ' '; 
             }
-            
             index++;
             
-            for (int i = 0; i < pow(2, levels - l + 1) - 1; i++) {
+            for (int i = 0; i < pow(2, numLevels - l + 1) - 1; i++) {
                 cout << ' ';
             }
         }
@@ -45,283 +169,77 @@ void RBT::print() { // credit: Stack Overflow
     }
 }
 
-// Insert number into RBT (wrapper method for ease of use)
-void RBT::insert(int data) {
-    insert(insertFirst(root, data));
-}
-
-// Find number in RBT
-bool RBT::find(int data) { return search(root, data) != 0; }
-Node* RBT::search(Node* root, int data) {
-    // if (root == NULL) { return NULL; }
-    if (root->isSentinel()) { return 0; }
-    
-    if (root->mData == data) { return root; }
-    else if (data > root->mData) { // If you're searching for a number that's greater, go right
-        return search(root->mRight, data);
-    } else { // If you're searching for a number that's less, go left
-        return search(root->mLeft, data);
-    }
-}
-
-// Remove number from RBT
-bool RBT::remove(int data) {
-    Node* target = search(root, data);
-    
-    // Node with desired data point not found
-    // if (target == NULL) { return false; }
-    if (target == 0) { return false; }
-    
-    // If neither child is null, replace target with next & delete next 
-    // if (target->mLeft != NULL && target->mRight != NULL) {
-    if (!target->mLeft->isSentinel() && !target->mRight->isSentinel()) {
-        Node* next = target->mRight;
-        // while (next->mLeft != NULL) {
-        while (!next->mLeft->isSentinel()) {
-            next = next->mLeft;
-        }
-        target->mData = next->mData;
-        target = next;
-    }
-    
-    removeTarget(target);
-    return true;
-}
-
-void RBT::removeTarget(Node* target) {
-    if (target->isRed()) { 
-        // target == NULL;
-        target->setSentinel();
-        return;
-    }
-    
-    Node* child;
-    if (target->mLeft->isSentinel()) {
-        child = target->mRight;
-    } else {
-        child = target->mLeft;
-    }
-    
-    if (child->isRed()) {
-        Node* parent = child->mParent;
-        child->mParent = child->getGrandparent();
-        (*parentPtrGenerator(parent)) = child;
-        (*parentPtrGenerator(child)) = 0;
-        parent->deleteSubtrees();
-        delete parent;
-        child->setColor('b');
-        return;
-    }
-    
-    // Node target must replace its former parent
-    target->setSentinel(); // target = NULL;
-    balance(target);
-}
-
-void RBT::balance(Node* node) {
-    // If node is the root
-    if (node->mParent == 0) { return; }
-    
-    Node* sibling = node->getSibling();
-    if (sibling->isRed()) { // Node's parent is black
-        // Reverse parent and sibling colors
-        node->mParent->setColor('r');
-        sibling->setColor('b');
-        
-        // Rotate sibling into parent's place
-        if(node->isChild('l')) {
-            // Slide the current node up to its parent locale
-            Node* parent = sibling->mParent;
-            Node* bygone = parent->mParent;
-            *parentPtrGenerator(bygone) = parent;
-            parent->mParent = parent->getGrandparent();
-            bygone->setRight(parent->mLeft);
-            parent->setLeft(bygone);
-        } else {
-            // Slide the current node up to its parent locale
-            Node* parent = sibling->mParent;
-            Node* bygone = parent->mParent;
-            *parentPtrGenerator(bygone) = parent;
-            parent->mParent = parent->getGrandparent();
-            bygone->setLeft(parent->mLeft);
-            parent->setRight(bygone);
-        }
-    }
-    
-    sibling = node->getSibling();
-    // If parent is black, set sibling to red & balance
-    if (node->mParent->mBlack && sibling->mBlack && sibling->mLeft->mBlack && sibling->mRight->mBlack) {
-        sibling->setColor('r');
-        balance(node->mParent);
-        return;
-    }
-    
-    // If parent is red, set sibling to red & recolor the parent (to black)
-    if (node->mParent->isRed() && sibling->mBlack && sibling->mLeft->mBlack && sibling->mRight->mBlack){
-        sibling->setColor('r');
-        node->mParent->setColor('b');
-        return;
-    }
-    
-    // The left child of the sibling is red:
-    if (node->isChild('l') && sibling->mRight->mBlack) {
-        // Swap colors of the sibling & its left child
-        sibling->mLeft->setColor('b');
-        sibling->setColor('r');
-        
-        // Slide the current node up to its parent locale
-        Node* parent = sibling->mLeft->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setLeft(parent->mLeft);
-        parent->setRight(bygone);
-    }
-    
-    // The right child of the sibling is red:
-    else if (node->isChild('r') && sibling->mLeft->mBlack) {
-        // Swap colors of the sibling & its right child
-        sibling->mRight->setColor('b');
-        sibling->setColor('r');
-        
-        // Slide the current node up to its parent locale
-        Node* parent = sibling->mRight->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setRight(parent->mLeft);
-        parent->setLeft(bygone);
-    }
-    
-    sibling = node->getSibling();
-    // Swap sibling & parent colors
-    sibling->mBlack = node->mParent->mBlack;
-    node->mParent->setColor('b');
-    if (node->isChild('l')) {
-        // Set sibling's right child to black
-        sibling->mRight->setColor('b');
-
-        // Slide the current node up to its parent locale
-        Node* parent = sibling->mRight->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setRight(parent->mLeft);
-        parent->setLeft(bygone);
-    } else {
-        // Set sibling's left child to black
-        sibling->mLeft->setColor('b');
-
-        // Slide the current node up to its parent locale
-        Node* parent = sibling->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setLeft(parent->mLeft);
-        parent->setRight(bygone);
-    }
-}
-
-// Main insertion algorithm
-void RBT::insert(Node* node) {
-    if (node->mParent == 0) {
-        node->setColor('b');
-        return;
-    } else if (node->mParent->mBlack) { // Parent is black
-        return;
-    } else if (node->getUncle()->isRed()) { // Parent is red, Uncle is red
-        // SET || Parent: black / Uncle: black / Grandparent: red
-        node->mParent->setColor('b');
-        node->getUncle()->setColor('b');
-        node->getGrandparent()->setColor('r');
-        
-        // Recursive iteration upwards, w/ grandparent
-        insert(node->getGrandparent());
-        
-        return;
-    }
-    
-    // Parent is red, Uncle is black | Current node is right child, Parent is left child
-    if (node->isChild('r') && node->mParent->isChild('l')) {
-        // Slide the current node up to its parent locale
-        Node* bygone = node->mParent;
-        *parentPtrGenerator(bygone) = node;
-        node->mParent = node->getGrandparent();
-        bygone->setRight(node->mLeft);
-        node->setLeft(bygone);
-        node = node->mLeft;
-    }
-    
-    // Parent is red, Uncle is black | Current node is left child, Parent is right child
-    if (node->isChild('l') && node->mParent->isChild('r')) {
-        // Slide the current node up to its parent locale
-        Node* bygone = node->mParent;
-        *parentPtrGenerator(bygone) = node;
-        node->mParent = node->getGrandparent();
-        bygone->setLeft(node->mLeft);
-        node->setRight(bygone);
-        node = node->mRight;
-    }
-    
-    node->getGrandparent()->setColor('r');
-    node->mParent->setColor('b');
-    
-    if (node->isChild('l')) { // If left child, shift parent to the right
-        Node* parent = node->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setLeft(parent->mLeft);
-        parent->setRight(bygone);
-    } else { // If right child, shift parent to the left
-        Node* parent = node->mParent;
-        Node* bygone = parent->mParent;
-        *parentPtrGenerator(bygone) = parent;
-        parent->mParent = parent->getGrandparent();
-        bygone->setRight(parent->mLeft);
-        parent->setLeft(bygone);
-    }
-}
-
-// Helper methods //
-// Visualization
-void RBT::populate(int* &list, int i, Node* node) { // credit: Stack Overflow
-    if(node == 0) { return; }
-    list[i] = node->mBlack ? node->mData : -node->mData;
-    populate(list, i*2+1, node->mLeft);
-    populate(list, i*2+2, node->mRight);
-}
-
-int RBT::countLevels(Node* root, int level = 0) { // credit: Stack Overflow
-    if (root == 0) { return level; }
-    return max(countLevels(root->mLeft, level + 1), countLevels(root->mRight, level + 1));
-}
-
-// RBT functions
 // Initiates RBT insertion process
-Node* RBT::insertFirst(Node* child, int data) {
-    // if (child->mLeft == 0 && child->mLeft == 0) {
-    if (child->isSentinel()) {
-        child->mData = data;
-        child->setColor('r');
-        child->setLeft(new Node());
-        child->setRight(new Node());
-        
+Node* RBT::insertFirst(Node * child, int num) {
+    if(child->isSentinel()) {
+        child->value = num;
+        child->paintRed();
+        child->addSentinelLeafs();
         return child;
     }
     
-    if (data < child->mData) {
-        return insertFirst(child->mLeft, data);
-    } else {
-        return insertFirst(child->mRight, data);
-    }
+    if(num < child->value) { return insertFirst(child->left, num); } 
+    else { return insertFirst(child->right, num); }
+}
+
+int RBT::getNumLevels(Node* currentRoot, int level = 0) {
+    if (currentRoot == 0) { return level; }
+    return max(getNumLevels(currentRoot->left, level + 1), getNumLevels(currentRoot->right, level + 1));
+}
+
+void RBT::populateArray(int *& array, int index, Node* node) {
+    if(node == 0) { return; }
+    array[index] = node->black ? node->value : -node->value;
+    populateArray(array, index*2+1, node->left);
+    populateArray(array, index*2+2, node->right);
+}
+
+Node* RBT::search(Node * currentRoot, int num) {
+    if(currentRoot->isSentinel()) { return 0; }
+    if(currentRoot->value == num) { return currentRoot; }
+    else if(num > currentRoot->value) { return search(currentRoot->right, num); }
+    else { return search(currentRoot->left, num); }
+}
+
+bool RBT::find(int num) {
+    return search(root, num) != 0;
+}
+
+void RBT::leftRotation(Node* formerChild) {
+    Node* formerParent = formerChild->parent;
+    *parentPtrTo(formerParent) = formerChild;
+    formerChild->parent = formerChild->grandparent();
+    formerParent->setRight(formerChild->left);
+    formerChild->setLeft(formerParent);
+}
+
+void RBT::rightRotation(Node* formerChild) {
+    Node* formerParent = formerChild->parent;
+    *parentPtrTo(formerParent) = formerChild;
+    formerChild->parent = formerChild->grandparent();
+    formerParent->setLeft(formerChild->right);
+    formerChild->setRight(formerParent);
 }
 
 // Generates a parent pointer
-Node** RBT::parentPtrGenerator(Node* child) {
+Node** RBT::parentPtrTo(Node* child) {
     Node** ptr;
-    if(child->mParent == 0) { ptr = &root; }
-    else if (child == child->mParent->mLeft) { ptr = &(child->mParent->mLeft); }
-    else { ptr = &(child->mParent->mRight); }
+    if (child->parent == 0) {
+        ptr = &root;
+    } else if (child == child->parent->left) {
+        ptr = &(child->parent->left);
+    } else {
+        ptr = &(child->parent->right);
+    }
     return ptr;
+}
+
+void RBT::replaceParentOf(Node* child) {
+    Node* parent = child->parent;
+    Node** childPtr = parentPtrTo(child);
+    child->parent = child->grandparent();
+    (*parentPtrTo(parent)) = child;
+    *childPtr = 0;
+    parent->deleteSubtrees();
+    delete parent;
 }
